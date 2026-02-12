@@ -1,16 +1,3 @@
-"""
-Agentic Recruitment Orchestrator – FastAPI backend.
-
-Endpoints:
-  POST /api/upload/jd           – upload a Job Description (PDF/TXT)
-  POST /api/upload/resumes      – upload one or more Resumes (PDF)
-  GET  /api/documents           – list uploaded documents
-  POST /api/pipeline/start      – kick-off the agent pipeline
-  GET  /api/pipeline/{run_id}   – poll pipeline status & results
-  POST /api/pipeline/{run_id}/approve  – human-in-the-loop approval
-  PUT  /api/pipeline/{run_id}/emails/{resume_id} – edit a drafted email
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -65,17 +52,11 @@ app.add_middleware(
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  UPLOAD ENDPOINTS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/upload/jd", response_model=DocumentMeta)
 async def upload_jd(file: UploadFile = File(...)):
-    """Upload a single Job Description (PDF or TXT).
-    Uploading a new JD resets the session: clears previous pipeline runs,
-    resumes, and ChromaDB embeddings for a clean slate.
-    """
-    # ── Purge previous session state ──────────────────────────────────────
+    # Purge previous session state
     documents.clear()
     pipeline_runs.clear()
     reset_collection()
@@ -88,7 +69,6 @@ async def upload_jd(file: UploadFile = File(...)):
 
 @app.post("/api/upload/resumes", response_model=list[DocumentMeta])
 async def upload_resumes(files: list[UploadFile] = File(...)):
-    """Upload one or more resume PDFs. Each is embedded into ChromaDB."""
     results: list[DocumentMeta] = []
     for f in files:
         file_bytes = await f.read()
@@ -102,23 +82,13 @@ async def upload_resumes(files: list[UploadFile] = File(...)):
 
 @app.get("/api/documents", response_model=list[DocumentMeta])
 async def list_documents():
-    """Return all uploaded documents."""
     return list(documents.values())
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  PIPELINE ENDPOINTS
-# ══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/pipeline/start", response_model=PipelineRunResponse)
 async def start_pipeline(req: StartPipelineRequest):
-    """
-    Kick off the agent pipeline:
-      1. Researcher analyses the JD
-      2. Vector search retrieves top-N resumes
-      3. Evaluator scores each candidate
-    The pipeline pauses at AWAITING_APPROVAL for human review.
-    """
     jd = documents.get(req.jd_id)
     if not jd or jd.doc_type != "jd":
         raise HTTPException(404, "JD not found")
@@ -139,7 +109,6 @@ async def start_pipeline(req: StartPipelineRequest):
 
 
 async def _run_pipeline(run: PipelineRun, top_n: int):
-    """Execute research → retrieval → evaluation in the background."""
     try:
         # ── Step 1: Researcher ────────────────────────────────────────────
         run.status = PipelineStatus.RESEARCHING
@@ -184,7 +153,6 @@ async def _run_pipeline(run: PipelineRun, top_n: int):
 
 @app.get("/api/pipeline/{run_id}", response_model=PipelineRunResponse)
 async def get_pipeline(run_id: str):
-    """Poll the current state of a pipeline run."""
     run = pipeline_runs.get(run_id)
     if not run:
         raise HTTPException(404, "Pipeline run not found")
@@ -193,10 +161,6 @@ async def get_pipeline(run_id: str):
 
 @app.post("/api/pipeline/{run_id}/approve", response_model=PipelineRunResponse)
 async def approve_shortlist(run_id: str, req: ApproveShortlistRequest):
-    """
-    Human-in-the-loop: approve a subset of shortlisted candidates.
-    Only after approval does the Writer agent draft outreach emails.
-    """
     run = pipeline_runs.get(run_id)
     if not run:
         raise HTTPException(404, "Pipeline run not found")
@@ -210,7 +174,6 @@ async def approve_shortlist(run_id: str, req: ApproveShortlistRequest):
 
 
 async def _write_emails(run: PipelineRun):
-    """Draft outreach emails for approved candidates."""
     try:
         run.status = PipelineStatus.WRITING_EMAILS
 
@@ -247,7 +210,6 @@ async def _write_emails(run: PipelineRun):
 
 @app.put("/api/pipeline/{run_id}/emails/{resume_id}", response_model=PipelineRunResponse)
 async def edit_email(run_id: str, resume_id: str, req: EditEmailRequest):
-    """Allow the user to edit a drafted outreach email."""
     run = pipeline_runs.get(run_id)
     if not run:
         raise HTTPException(404, "Pipeline run not found")
@@ -261,7 +223,7 @@ async def edit_email(run_id: str, resume_id: str, req: EditEmailRequest):
     raise HTTPException(404, "Email not found for given resume_id")
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# Helpers
 
 def _to_response(run: PipelineRun) -> PipelineRunResponse:
     return PipelineRunResponse(
@@ -274,7 +236,7 @@ def _to_response(run: PipelineRun) -> PipelineRunResponse:
     )
 
 
-# ── Session reset (explicit) ─────────────────────────────────────────────────
+# Session reset (explicit)
 
 @app.post("/api/session/reset")
 async def reset_session():
@@ -285,7 +247,7 @@ async def reset_session():
     return {"status": "ok"}
 
 
-# ── Dev entry-point ──────────────────────────────────────────────────────────
+# Dev entry-point
 if __name__ == "__main__":
     import uvicorn
 

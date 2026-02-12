@@ -1,10 +1,3 @@
-"""
-ChromaDB-backed vector store for resume embeddings.
-
-Uses a local sentence-transformers model (all-MiniLM-L6-v2) for embeddings.
-Stores resume text chunks together with metadata (resume_id, filename).
-"""
-
 from __future__ import annotations
 
 import chromadb
@@ -13,7 +6,7 @@ from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunct
 
 from app.config import CHROMA_DIR, EMBEDDING_MODEL
 
-# ── Singleton client / collection ─────────────────────────────────────────────
+# Singleton client / collection
 _client: chromadb.ClientAPI | None = None
 _collection: chromadb.Collection | None = None
 
@@ -25,7 +18,6 @@ def _get_embedding_fn() -> SentenceTransformerEmbeddingFunction:
 
 
 def get_collection() -> chromadb.Collection:
-    """Return (and lazily create) the 'resumes' collection."""
     global _client, _collection
     if _collection is None:
         _client = chromadb.PersistentClient(
@@ -41,10 +33,6 @@ def get_collection() -> chromadb.Collection:
 
 
 def _chunk_text(text: str, max_chars: int = 2000, overlap: int = 200) -> list[str]:
-    """
-    Naive chunking by character count with overlap.
-    Keeps each chunk under the embedding model's context window.
-    """
     chunks: list[str] = []
     start = 0
     while start < len(text):
@@ -55,10 +43,6 @@ def _chunk_text(text: str, max_chars: int = 2000, overlap: int = 200) -> list[st
 
 
 def add_resume(resume_id: str, filename: str, text: str) -> int:
-    """
-    Embed and upsert a resume's text chunks into ChromaDB.
-    Returns the number of chunks stored.
-    """
     col = get_collection()
     chunks = _chunk_text(text)
     ids = [f"{resume_id}_chunk_{i}" for i in range(len(chunks))]
@@ -71,13 +55,6 @@ def add_resume(resume_id: str, filename: str, text: str) -> int:
 
 
 def query_resumes(jd_text: str, top_n: int = 5) -> list[dict]:
-    """
-    Retrieve the top-N most semantically similar resume chunks to the JD,
-    then deduplicate by resume_id and return ranked unique resumes.
-
-    Returns a list of dicts:
-        [{"resume_id": ..., "filename": ..., "score": ..., "text": ...}, ...]
-    """
     col = get_collection()
     # Query more chunks to ensure we get enough unique resumes
     results = col.query(
@@ -113,7 +90,6 @@ def query_resumes(jd_text: str, top_n: int = 5) -> list[dict]:
 
 
 def get_full_resume_text(resume_id: str) -> str:
-    """Retrieve and reassemble all chunks for a given resume_id."""
     col = get_collection()
     results = col.get(
         where={"resume_id": resume_id},
@@ -131,7 +107,6 @@ def get_full_resume_text(resume_id: str) -> str:
 
 
 def delete_resume(resume_id: str) -> None:
-    """Remove all chunks for a given resume_id."""
     col = get_collection()
     results = col.get(where={"resume_id": resume_id})
     if results["ids"]:
@@ -139,10 +114,6 @@ def delete_resume(resume_id: str) -> None:
 
 
 def reset_collection() -> None:
-    """
-    Delete and recreate the 'resumes' collection.
-    Ensures a clean slate — no stale embeddings from previous sessions.
-    """
     global _client, _collection
     if _client is None:
         _client = chromadb.PersistentClient(

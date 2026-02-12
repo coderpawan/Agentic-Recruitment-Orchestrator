@@ -1,14 +1,3 @@
-"""
-CrewAI agent definitions for the Agentic Recruitment Orchestrator.
-
-Three agents form the crew:
-  1. Researcher  – extracts structured requirements from the JD
-  2. Evaluator   – scores candidates with reasoning & gap analysis
-  3. Writer      – drafts personalised outreach emails
-
-Each agent uses LLM-based reasoning via Groq (Llama 3.3 70B).
-"""
-
 from __future__ import annotations
 
 import json
@@ -28,9 +17,8 @@ from app.models import (
 )
 
 
-# ── LLM factory (Groq) ───────────────────────────────────────────────────────
+# LLM factory (Groq)
 def _build_llm() -> LLM:
-    """Create the Groq-backed LLM instance."""
     return LLM(
         model=f"groq/{GROQ_MODEL}",
         api_key=GROQ_API_KEY,
@@ -38,9 +26,7 @@ def _build_llm() -> LLM:
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  1. RESEARCHER
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _researcher_agent(llm: LLM) -> Agent:
     return Agent(
@@ -81,9 +67,7 @@ def _researcher_task(agent: Agent, jd_text: str) -> Task:
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  2. EVALUATOR
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _evaluator_agent(llm: LLM) -> Agent:
     return Agent(
@@ -143,9 +127,7 @@ def _evaluator_task(
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  3. WRITER
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _writer_agent(llm: LLM) -> Agent:
     return Agent(
@@ -206,12 +188,9 @@ def _writer_task(
     )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 #  PUBLIC CREW RUNNERS
-# ══════════════════════════════════════════════════════════════════════════════
 
 def _parse_json(raw: str) -> Any:
-    """Best-effort extraction of JSON from an LLM response string."""
     # Strip markdown code fences if present
     cleaned = re.sub(r"```(?:json)?\s*", "", raw)
     cleaned = cleaned.strip().rstrip("`")
@@ -219,7 +198,6 @@ def _parse_json(raw: str) -> Any:
 
 
 async def run_researcher(jd_text: str) -> JDAnalysis:
-    """Run the Researcher agent on a JD and return structured analysis."""
     llm = _build_llm()
     agent = _researcher_agent(llm)
     task = _researcher_task(agent, jd_text)
@@ -238,7 +216,6 @@ async def run_evaluator(
     jd_analysis: JDAnalysis,
     resumes: list[dict],
 ) -> list[CandidateEvaluation]:
-    """Run the Evaluator agent on retrieved resumes."""
     llm = _build_llm()
     agent = _evaluator_agent(llm)
     jd_json = jd_analysis.model_dump_json()
@@ -268,7 +245,6 @@ async def run_writer(
     evaluations: list[CandidateEvaluation],
     resumes: list[dict],
 ) -> list[OutreachEmail]:
-    """Run the Writer agent to draft emails for approved candidates."""
     llm = _build_llm()
     agent = _writer_agent(llm)
     jd_json = jd_analysis.model_dump_json()

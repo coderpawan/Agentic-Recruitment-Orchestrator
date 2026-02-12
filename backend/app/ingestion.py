@@ -1,8 +1,3 @@
-"""
-PDF / text ingestion using PyMuPDF (fitz).
-Extracts clean text from uploaded PDF files.
-"""
-
 from __future__ import annotations
 
 import shutil
@@ -16,7 +11,6 @@ from app.models import DocumentMeta
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """Extract all text from a PDF byte stream."""
     doc = fitz.open(stream=file_bytes, filetype="pdf")
     pages: list[str] = []
     for page in doc:
@@ -26,7 +20,6 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 
 def extract_text_from_txt(file_bytes: bytes) -> str:
-    """Decode plain text bytes."""
     return file_bytes.decode("utf-8", errors="replace").strip()
 
 
@@ -35,10 +28,6 @@ async def save_and_extract(
     filename: str,
     doc_type: str,
 ) -> DocumentMeta:
-    """
-    Persist the uploaded file to disk and return a DocumentMeta with
-    the extracted text.
-    """
     file_bytes = file if isinstance(file, bytes) else file.read()
 
     # Persist raw file

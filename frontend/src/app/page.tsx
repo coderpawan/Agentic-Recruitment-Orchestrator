@@ -29,7 +29,7 @@ import type {
   PipelineStatus,
 } from "@/lib/types";
 
-/* ── Polling statuses that require continued fetching ──────────────────────── */
+/* Polling statuses that require continued fetching */
 const ACTIVE_STATUSES: PipelineStatus[] = [
   "pending",
   "researching",
@@ -38,26 +38,26 @@ const ACTIVE_STATUSES: PipelineStatus[] = [
 ];
 
 export default function DashboardPage() {
-  /* ── Upload state ────────────────────────────────────────────────────────── */
+  /* Upload state */
   const [jd, setJd] = useState<DocumentMeta | null>(null);
   const [resumes, setResumes] = useState<DocumentMeta[]>([]);
 
-  /* ── Pipeline state ──────────────────────────────────────────────────────── */
+  /* Pipeline state */
   const [pipeline, setPipeline] = useState<PipelineRunResponse | null>(null);
   const [launching, setLaunching] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /* ── Approval selection ──────────────────────────────────────────────────── */
+  /* Approval selection */
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  /* ── Email modal ─────────────────────────────────────────────────────────── */
+  /* Email modal */
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [activeEmail, setActiveEmail] = useState<OutreachEmail | null>(null);
 
-  /* ── Top-N setting ───────────────────────────────────────────────────────── */
+  /* Top-N setting */
   const [topN, setTopN] = useState(5);
 
-  /* ── Polling logic ───────────────────────────────────────────────────────── */
+  /* Polling logic */
   const startPolling = useCallback((runId: string) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     pollingRef.current = setInterval(async () => {
@@ -81,7 +81,8 @@ export default function DashboardPage() {
     };
   }, []);
 
-  /* ── Handlers ────────────────────────────────────────────────────────────── */  const handleNewJD = async (doc: DocumentMeta) => {
+  /* Handlers */  
+  const handleNewJD = async (doc: DocumentMeta) => {
     // Purge all previous session state for a clean slate
     setResumes([]);
     setPipeline(null);
@@ -149,7 +150,7 @@ export default function DashboardPage() {
     }
   };
 
-  /* ── Derived data ────────────────────────────────────────────────────────── */
+  /* Derived data  */
   const emailMap = new Map(pipeline?.emails.map((e) => [e.resume_id, e]) ?? []);
   const shortlistedCount = pipeline?.evaluations.filter((e) => e.shortlisted).length ?? 0;
   const avgMatch =
@@ -160,7 +161,7 @@ export default function DashboardPage() {
         )
       : 0;
 
-  /* ── Render ──────────────────────────────────────────────────────────────── */
+  /* Render */
   return (
     <div className="min-h-screen bg-muted/40">
       {/* Header */}
@@ -174,7 +175,7 @@ export default function DashboardPage() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* ── Step 1: Upload ──────────────────────────────────────────────── */}
+        {/* Step 1: Upload */}
         <section>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <FileSearch2 className="w-5 h-5" /> Step 1 — Upload Documents
@@ -188,7 +189,7 @@ export default function DashboardPage() {
           />
         </section>
 
-        {/* ── Launch Pipeline ─────────────────────────────────────────────── */}
+        {/* Launch Pipeline */}
         {jd && resumes.length > 0 && !pipeline && (
           <section className="flex items-center gap-4">
             <Button onClick={handleLaunch} disabled={launching} size="lg">
@@ -198,7 +199,7 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* ── Pipeline Status ─────────────────────────────────────────────── */}
+        {/* Pipeline Status */}
         {pipeline && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
@@ -217,7 +218,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* ── JD Analysis summary ──────────────────────────────────── */}
+            {/* JD Analysis summary */}
             {pipeline.jd_analysis && (
               <Card>
                 <CardHeader className="pb-3">
@@ -242,7 +243,7 @@ export default function DashboardPage() {
               </Card>
             )}
 
-            {/* ── Candidate Cards Grid ─────────────────────────────────── */}
+            {/* Candidate Cards Grid */}
             {pipeline.evaluations.length > 0 && (
               <div>
                 <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -269,7 +270,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* ── Approve button (HITL) ────────────────────────────────── */}
+            {/* Approve button (HITL) */}
             {pipeline.status === "awaiting_approval" && (
               <div className="flex justify-end">
                 <Button
@@ -287,7 +288,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* ── Email edit modal ──────────────────────────────────────────────── */}
+      {/* Email edit modal */}
       <EmailModal
         email={activeEmail}
         open={emailModalOpen}

@@ -1,7 +1,3 @@
-"""
-Pydantic schemas used across the API and agent pipeline.
-"""
-
 from __future__ import annotations
 
 import uuid
@@ -12,7 +8,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-# ── Enums ─────────────────────────────────────────────────────────────────────
+# Enums
 class PipelineStatus(str, Enum):
     PENDING = "pending"
     RESEARCHING = "researching"
@@ -23,7 +19,7 @@ class PipelineStatus(str, Enum):
     FAILED = "failed"
 
 
-# ── Ingestion ─────────────────────────────────────────────────────────────────
+# Ingestion
 class DocumentMeta(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     filename: str
@@ -32,7 +28,7 @@ class DocumentMeta(BaseModel):
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-# ── Researcher output ────────────────────────────────────────────────────────
+# Researcher output
 class JDAnalysis(BaseModel):
     role_title: str = ""
     technical_requirements: list[str] = []
@@ -44,7 +40,7 @@ class JDAnalysis(BaseModel):
     summary: str = ""
 
 
-# ── Evaluator output ─────────────────────────────────────────────────────────
+# Evaluator output
 class GapItem(BaseModel):
     skill: str
     trainable: bool = True
@@ -62,7 +58,7 @@ class CandidateEvaluation(BaseModel):
     shortlisted: bool = False
 
 
-# ── Writer output ─────────────────────────────────────────────────────────────
+# Writer output
 class OutreachEmail(BaseModel):
     resume_id: str
     candidate_name: str
@@ -70,7 +66,7 @@ class OutreachEmail(BaseModel):
     body: str = ""
 
 
-# ── Pipeline state (held in-memory) ──────────────────────────────────────────
+# Pipeline state (held in-memory)
 class PipelineRun(BaseModel):
     run_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     status: PipelineStatus = PipelineStatus.PENDING
@@ -85,7 +81,7 @@ class PipelineRun(BaseModel):
     error: Optional[str] = None
 
 
-# ── API request / response helpers ───────────────────────────────────────────
+# API request / response helpers
 class StartPipelineRequest(BaseModel):
     jd_id: str
     top_n: int = 5
