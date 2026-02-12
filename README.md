@@ -6,9 +6,9 @@ An AI-powered recruitment pipeline that parses Job Descriptions and Resumes, per
 
 ## Demo
 
-Watch the system in action:
-
-https://github.com/coderpawan/Agentic-Recruitment-Orchestrator/blob/main/Recruitment%20Orchestration%20DEMO.webm
+<video src="https://github.com/coderpawan/Agentic-Recruitment-Orchestrator/raw/main/Recruitment%20Orchestration%20DEMO.webm" width="100%" controls>
+  Your browser does not support the video tag.
+</video>
 
 ## Architecture
 
